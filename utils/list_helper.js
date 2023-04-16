@@ -8,7 +8,18 @@ const totalLikes = (blogs) => {
     return totalLikes
 }
 
+const favoriteBlog = (blogs) => {
+    if(blogs.length === 0) {
+        return {}
+    }
+    const maxLikes = Math.max(...blogs.map(e => e.likes))
+    const objWithMaxLikes = blogs.find(blog => blog.likes === maxLikes)
+    const { _id, url, __v, ...returnBlogObj } = objWithMaxLikes
+    return returnBlogObj
+}
+
 module.exports = {
     dummy,
-    totalLikes
+    totalLikes,
+    favoriteBlog
 }

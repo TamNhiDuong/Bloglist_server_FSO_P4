@@ -38,9 +38,28 @@ const mostBlogs = (blogs) => {
     return objWithMostBlogs
 }
 
+const mostLikes = (blogs) => {
+    if (blogs.length === 0) {
+        return {}
+    }
+
+    const grouped = _.groupBy(blogs, author => author.author)
+    const likeAmountByAuthor = []
+    Object.keys(grouped).forEach(k => {
+        const likeAmount = grouped[k].reduce((acc, item) => acc + item.likes, 0)
+        likeAmountByAuthor.push({ author: k, likes: likeAmount })
+    })
+
+    // Find author whose blogs have most likes
+    const mostLikes = Math.max(...likeAmountByAuthor.map(e => e.likes))
+    const objWithMostLikes = likeAmountByAuthor.find(e => e.likes === mostLikes)
+    return objWithMostLikes
+}
+
 module.exports = {
     dummy,
     totalLikes,
     favoriteBlog,
-    mostBlogs
+    mostBlogs,
+    mostLikes
 }

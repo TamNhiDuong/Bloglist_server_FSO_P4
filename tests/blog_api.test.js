@@ -1,3 +1,4 @@
+// Run: npm test -- tests/blog_api.test.js
 const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
@@ -58,6 +59,30 @@ test('the unique identifier property of the blog posts is named id', async () =>
     console.log('res: ', response.body)
     expect(response.body[0].id).toBeDefined()
 }, 100000)
+
+test('a valid blog can be added', async () => {
+    const newBlog = {
+        title: "Test adding a new blog",
+        author: "Tester",
+        url: "http://localhost:3003/api/blogs",
+        likes: 10
+    }
+  
+    await api
+      .post('/api/blogs')
+      .send(newBlog)
+      .expect(201)
+      .expect('Content-Type', /application\/json/)
+  
+    const response = await api.get('/api/blogs')
+  
+    const titles = response.body.map(r => r.title)
+  
+    expect(response.body).toHaveLength(initialBlogs.length + 1)
+    expect(titles).toContain(
+      'Test adding a new blog'
+    )
+  }, 100000)
 
 afterAll(async () => {
     await mongoose.connection.close()

@@ -40,7 +40,6 @@ test('a specific blog is within the returned blogs', async () => {
 test('the unique identifier property of the blog posts is named id', async () => {
     const response = await api.get('/api/blogs')
 
-    console.log('res: ', response.body)
     expect(response.body[0].id).toBeDefined()
 }, 100000)
 
@@ -65,6 +64,28 @@ test('a valid blog can be added', async () => {
     expect(titles).toContain(
         'Test adding a new blog'
     )
+}, 100000)
+
+test('if the likes property is missing from the request, it will default to the value 0', async () => {
+    const newBlog = {
+        title: "Missing like property",
+        author: "Tester",
+        url: "http://localhost:3003/api/blogs"
+    }
+
+    await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(201)
+        .expect('Content-Type', /application\/json/)
+
+    const blogsAtEnd = await helper.blogsInDb()
+    console.log('blogsAtEnd: ', blogsAtEnd)
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
+
+    const lastAddedBlog = blogsAtEnd.filter(blog => blog.title === "Missing like property")
+    console.log('lastAddedBlog: ', lastAddedBlog)
+    expect(lastAddedBlog[0].likes).toBe(0)
 }, 100000)
 
 afterAll(async () => {

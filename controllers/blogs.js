@@ -1,5 +1,6 @@
 const blogsRouter = require('express').Router()
 const Blog = require('../models/blog')
+const _ = require('lodash')
 
 blogsRouter.get('/', async (request, response) => {
     const blogs = await Blog.find({})
@@ -7,8 +8,12 @@ blogsRouter.get('/', async (request, response) => {
 })
 
 blogsRouter.post('/', async (request, response) => {
-    const blog = new Blog(request.body)
-
+    const reqBody = request.body
+    if(!_.has(reqBody, 'likes')) {
+        reqBody.likes = 0
+    }
+    const blog = new Blog(reqBody)
+    console.log('Going to add this blog: ', blog)
     const result = blog.save()
     response.status(201).json(result)
 })

@@ -3,29 +3,13 @@ const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
 const Blog = require('../models/blog')
-
-const initialBlogs = [
-    {
-        title: "Test1",
-        author: "10-334",
-        url: "http://localhost:3003/api/blogs",
-        likes: 10,
-        id: "6449145ea146b589491b7f3e"
-    },
-    {
-        title: "Test2",
-        author: "10-334",
-        url: "http://localhost:3003/api/blogs",
-        likes: 10,
-        id: "64491464a146b589491b7f40"
-    },
-]
+const helper = require('./test_helper')
 
 beforeEach(async () => {
     await Blog.deleteMany({})
-    let blogObject = new Blog(initialBlogs[0])
+    let blogObject = new Blog(helper.initialBlogs[0])
     await blogObject.save()
-    blogObject = new Blog(initialBlogs[1])
+    blogObject = new Blog(helper.initialBlogs[1])
     await blogObject.save()
 })
 
@@ -41,7 +25,7 @@ test('blogs are returned as json', async () => {
 test('all blogs are returned', async () => {
     const response = await api.get('/api/blogs')
 
-    expect(response.body).toHaveLength(initialBlogs.length)
+    expect(response.body).toHaveLength(helper.initialBlogs.length)
 }, 100000)
 
 test('a specific blog is within the returned blogs', async () => {
@@ -67,22 +51,21 @@ test('a valid blog can be added', async () => {
         url: "http://localhost:3003/api/blogs",
         likes: 10
     }
-  
+
     await api
-      .post('/api/blogs')
-      .send(newBlog)
-      .expect(201)
-      .expect('Content-Type', /application\/json/)
-  
-    const response = await api.get('/api/blogs')
-  
-    const titles = response.body.map(r => r.title)
-  
-    expect(response.body).toHaveLength(initialBlogs.length + 1)
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(201)
+        .expect('Content-Type', /application\/json/)
+
+    const blogsAtEnd = await helper.blogsInDb()
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
+
+    const titles = blogsAtEnd.map(b => b.title)
     expect(titles).toContain(
-      'Test adding a new blog'
+        'Test adding a new blog'
     )
-  }, 100000)
+}, 100000)
 
 afterAll(async () => {
     await mongoose.connection.close()

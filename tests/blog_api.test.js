@@ -1,4 +1,5 @@
 // Run: npm test -- tests/blog_api.test.js
+// Run a single test: npm test -- -t ""
 const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
@@ -87,6 +88,19 @@ test('if the likes property is missing from the request, it will default to the 
     console.log('lastAddedBlog: ', lastAddedBlog)
     expect(lastAddedBlog[0].likes).toBe(0)
 }, 100000)
+
+test('if the title or url properties are missing, return error code 400', async () => {
+    const newBlog = {
+        author: "Tester",
+        likes: 10
+    }
+
+    await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(400)
+}, 100000)
+
 
 afterAll(async () => {
     await mongoose.connection.close()

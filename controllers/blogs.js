@@ -14,13 +14,13 @@ blogsRouter.get('/', async (request, response, next) => {
 
 blogsRouter.post('/', async (request, response, next) => {
     const reqBody = request.body
-    
-    if(!_.has(reqBody, 'url') || !_.has(reqBody, 'title')) {
+
+    if (!_.has(reqBody, 'url') || !_.has(reqBody, 'title')) {
         return response.status(400).json({ error: 'content missing' })
     } else {
         if (!_.has(reqBody, 'likes')) {
             reqBody.likes = 0
-        } 
+        }
     }
     const blog = new Blog(reqBody)
     try {
@@ -31,5 +31,11 @@ blogsRouter.post('/', async (request, response, next) => {
     }
 
 })
+
+blogsRouter.delete('/:id', async (request, response) => {
+    await Blog.findByIdAndRemove(request.params.id)
+    response.status(204).end()
+})
+
 
 module.exports = blogsRouter

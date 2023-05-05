@@ -5,7 +5,7 @@ const User = require('../models/user')
 
 blogsRouter.get('/', async (request, response, next) => {
     try {
-        const blogs = await Blog.find({})
+        const blogs = await Blog.find({}).populate('user')
         response.json(blogs)
     } catch (e) {
         next(e)
@@ -25,7 +25,9 @@ blogsRouter.post('/', async (request, response, next) => {
             reqBody.likes = 0
         }
     }
-    const blog = new Blog(reqBody)
+    const clonedReqBody = _.omit(reqBody, 'userId')
+    const blog = new Blog({ ...clonedReqBody, user: user.id })
+
     try {
         const result = await blog.save()
         user.blogs = user.blogs.concat(result._id)

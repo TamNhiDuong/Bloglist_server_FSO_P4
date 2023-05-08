@@ -2,6 +2,15 @@ const blogsRouter = require('express').Router()
 const Blog = require('../models/blog')
 const _ = require('lodash')
 const User = require('../models/user')
+const jwt = require('jsonwebtoken')
+
+const getTokenFrom = request => {
+    const authorization = request.get('authorization')
+    if (authorization && authorization.startsWith('Bearer ')) {
+        return authorization.replace('Bearer ', '')
+    }
+    return null
+}
 
 blogsRouter.get('/', async (request, response, next) => {
     try {
@@ -16,7 +25,12 @@ blogsRouter.get('/', async (request, response, next) => {
 blogsRouter.post('/', async (request, response, next) => {
     const reqBody = request.body
 
-    const user = await User.findById(reqBody.userId)
+    // sending token 
+    const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET)
+    if (!decodedToken.id) {
+      return response.status(401).json({ error: 'token invalid' })
+    }
+    const user = await User.findById(decodedToken.id)
 
     if (!_.has(reqBody, 'url') || !_.has(reqBody, 'title')) {
         return response.status(400).json({ error: 'content missing' })
@@ -25,8 +39,7 @@ blogsRouter.post('/', async (request, response, next) => {
             reqBody.likes = 0
         }
     }
-    const clonedReqBody = _.omit(reqBody, 'userId')
-    const blog = new Blog({ ...clonedReqBody, user: user.id })
+    const blog = new Blog({ ...reqBody, user: user.id })
 
     try {
         const result = await blog.save()

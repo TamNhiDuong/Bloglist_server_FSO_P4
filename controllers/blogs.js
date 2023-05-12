@@ -18,27 +18,24 @@ blogsRouter.post('/', async (request, response, next) => {
     try {
         const reqBody = request.body
 
-        // token handling
-        const decodedToken = jwt.verify(request.token, process.env.SECRET)
-        if (!decodedToken.id) {
-            return response.status(401).json({ error: 'token invalid' })
-        }
-        const user = await User.findById(decodedToken.id)
-
-        if (!_.has(reqBody, 'url') || !_.has(reqBody, 'title')) {
-            return response.status(400).json({ error: 'content missing' })
-        } else {
-            if (!_.has(reqBody, 'likes')) {
-                reqBody.likes = 0
+        if (request.user) {
+            const user = request.user
+            if (!_.has(reqBody, 'url') || !_.has(reqBody, 'title')) {
+                return response.status(400).json({ error: 'content missing' })
+            } else {
+                if (!_.has(reqBody, 'likes')) {
+                    reqBody.likes = 0
+                }
             }
+            const blog = new Blog({ ...reqBody, user: user.id })
+
+            const result = await blog.save()
+            user.blogs = user.blogs.concat(result._id)
+            await user.save()
+            response.status(201).json(result)
+        } else {
+            return response.status(401).json({ error: 'user not found' })
         }
-        const blog = new Blog({ ...reqBody, user: user.id })
-
-
-        const result = await blog.save()
-        user.blogs = user.blogs.concat(result._id)
-        await user.save()
-        response.status(201).json(result)
     } catch (e) {
         next(e)
     }
@@ -48,18 +45,17 @@ blogsRouter.post('/', async (request, response, next) => {
 blogsRouter.delete('/:id', async (request, response, next) => {
     // token handling
     try {
-        const decodedToken = jwt.verify(request.token, process.env.SECRET)
-        if (!decodedToken.id) {
-            return response.status(401).json({ error: 'token invalid' })
-        }
-        const user = await User.findById(decodedToken.id)
-
-        const blog = await Blog.findById(request.params.id)
-        if (user.id.toString() === blog.user.toString()) {
-            await Blog.findByIdAndRemove(request.params.id)
-            response.status(204).end()
+        if (request.user) {
+            const user = request.user
+            const blog = await Blog.findById(request.params.id)
+            if (user.id.toString() === blog.user.toString()) {
+                await Blog.findByIdAndRemove(request.params.id)
+                response.status(204).end()
+            } else {
+                return response.status(401).json({ error: 'user is not creator' })
+            }
         } else {
-            return response.status(401).json({ error: 'user is not creator' })
+            return response.status(401).json({ error: 'user not found' })
         }
     } catch (e) {
         next(e)

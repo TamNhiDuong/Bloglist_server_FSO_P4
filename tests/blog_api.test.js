@@ -91,6 +91,24 @@ describe('creating new blog', () => {
             'Test adding a new blog'
         )
     }, 100000)
+
+    test('a valid blog cannot be added, if no TOKEN provided', async () => {
+        const newBlog = {
+            title: "Test adding a new blog",
+            author: "Tester",
+            url: "http://localhost:3003/api/blogs",
+            likes: 10
+        }
+
+        await api
+            .post('/api/blogs')
+            .send(newBlog)
+            .expect(401)
+            .expect('Content-Type', /application\/json/)
+
+        const blogsAtEnd = await helper.blogsInDb()
+        expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
+    }, 100000)
 })
 
 test('if the likes property is missing from the request, it will default to the value 0', async () => {

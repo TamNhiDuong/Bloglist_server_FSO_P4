@@ -47,28 +47,51 @@ test('the unique identifier property of the blog posts is named id', async () =>
     expect(response.body[0].id).toBeDefined()
 }, 100000)
 
-test('a valid blog can be added', async () => {
-    const newBlog = {
-        title: "Test adding a new blog",
-        author: "Tester",
-        url: "http://localhost:3003/api/blogs",
-        likes: 10
-    }
+describe('creating new blog', () => {
+    let TOKEN = ''
 
-    await api
-        .post('/api/blogs')
-        .send(newBlog)
-        .expect(201)
-        .expect('Content-Type', /application\/json/)
+    beforeAll(async () => {
+        // creating new user and get token
+        await User.deleteMany({})
+        const passwordHash = await bcrypt.hash('root', 10)
+        const user = new User({ username: 'root', passwordHash })
+        await user.save()
 
-    const blogsAtEnd = await helper.blogsInDb()
-    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
+        // get token
+        const loginAcc = {
+            username: "root",
+            password: "root"
+        }
+        const response = await api
+            .post('/api/login')
+            .send(loginAcc)
+        TOKEN = response.body.token
+    })
 
-    const titles = blogsAtEnd.map(b => b.title)
-    expect(titles).toContain(
-        'Test adding a new blog'
-    )
-}, 100000)
+    test('a valid blog can be added, with a valid TOKEN', async () => {
+        const newBlog = {
+            title: "Test adding a new blog",
+            author: "Tester",
+            url: "http://localhost:3003/api/blogs",
+            likes: 10
+        }
+
+        await api
+            .post('/api/blogs')
+            .send(newBlog)
+            .set('Authorization', `Bearer ${TOKEN}`)
+            .expect(201)
+            .expect('Content-Type', /application\/json/)
+
+        const blogsAtEnd = await helper.blogsInDb()
+        expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
+
+        const titles = blogsAtEnd.map(b => b.title)
+        expect(titles).toContain(
+            'Test adding a new blog'
+        )
+    }, 100000)
+})
 
 test('if the likes property is missing from the request, it will default to the value 0', async () => {
     const newBlog = {
@@ -126,7 +149,7 @@ describe('deletion of a blog', () => {
     })
 })
 
-describe('when there is initially one user in db', () => {
+describe('creating new user, when there is initially one user in db', () => {
     beforeEach(async () => {
         await User.deleteMany({})
 

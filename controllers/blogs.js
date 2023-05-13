@@ -20,6 +20,7 @@ blogsRouter.post('/', async (request, response, next) => {
 
         if (request.user) {
             const user = request.user
+            console.log('user:::::::::.', user)
             if (!_.has(reqBody, 'url') || !_.has(reqBody, 'title')) {
                 return response.status(400).json({ error: 'content missing' })
             } else {
